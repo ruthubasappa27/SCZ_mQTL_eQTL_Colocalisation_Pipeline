@@ -9,13 +9,13 @@ This repository contains the computational pipeline for identifying and prioriti
 **Degree:** MSc Clinical Neuroscience  
 
 ## Study Design
-- **GWAS data:** PGC3 SCZ GWAS (Trubetskoy et al. 2022, Nature) — n=127,906
-- **mQTL data:** Hannon et al. fetal brain mQTL (2016, Nature Neuroscience) — n=166
+- **GWAS data:** PGC3 SCZ GWAS (Trubetskoy et al. 2022, Nature) - n=127,906
+- **mQTL data:** Hannon et al. fetal brain mQTL (2016, Nature Neuroscience) - n=166
 - **Genome build:** GRCh37/hg19
-- **Pipeline:** COLOC-reporter (Spargo et al. 2023, eLife)
+- **Pipeline:** COLOC-reporter (Spargo et al. 2024, eLife)
 
 ## Key Results
-6 colocalised loci identified (PP4 >= 0.8):
+6 colocalised loci identified (PP4 ≥ 0.8):
 
 | Gene | PP4 | p_SMR | p_HEIDI |
 |------|-----|-------|---------|
@@ -26,7 +26,29 @@ This repository contains the computational pipeline for identifying and prioriti
 | WDR55 | 0.881 | 3.51e-05 | 0.604 |
 | DYNC1I2 | 0.816 | 1.42e-04 | 0.825 |
 
+Note: Non-significant HEIDI p-values were interpreted as being consistent with a shared underlying genetic signal rather than linkage-driven heterogeneity.
+
+
 ## Repository Structure
+```
+SCZ_mQTL_DrugTarget_Pipeline/
+├── 01_data_preprocessing/
+│   └── full_analysis.R
+├── 02_locus_definition/
+│   └── reload_results.R
+├── 03_colocalisation/
+│   ├── run_coloc_all.sh
+│   └── GWAS_samples.txt
+├── 04_results_analysis/
+│   └── Project Sample run 1.R
+├── 05_functional_validation/
+│   └── cadd_annotation.R
+└── 06_SMR_analysis/
+    ├── all_probes.txt
+    ├── prepare_gwas_smr.R
+    └── run_smr.sh
+```
+
 ## Requirements
 
 ### Software
@@ -41,6 +63,10 @@ This repository contains the computational pipeline for identifying and prioriti
 - susieR
 - httr
 - jsonlite
+
+### Operating System
+- Tested on macOS (Apple Silicon, arm64)
+- Linux compatible (use smr-1.4.1-linux-x86_64) 
 
 ## Data Sources
 All datasets are publicly available:
@@ -66,8 +92,9 @@ Run within `01_data_preprocessing/full_analysis.R`
 
 ### Step 3 — Colocalisation
 Run `03_colocalisation/run_coloc_all.sh`
-- COLOC-reporter pipeline with trySusie mode
-- PP4 >= 0.8 threshold
+- COLOC-reporter pipeline using coloc.susie where convergence was achieved
+- Automatic fallback to coloc.abf in loci where SuSiE fine-mapping failed to converge
+- PP4 ≥ 0.8 threshold used to define colocalised loci
 - Output: results in COLOC-reporter/coloc/results/
 
 ### Step 4 — Results Analysis
@@ -75,14 +102,14 @@ Run `04_results_analysis/Project Sample run 1.R`
 - Credible set construction
 - Directionality analysis
 - Variant annotation
-
+  
 ### Step 5 — Functional Validation
-- CADD scores: myvariant.info API (hg19)
-- ClinVar: myvariant.info API
-- Cell type specificity: Polioudakis et al. 2019 (UCLA Geschwind lab)
-- LD analysis: LDlink (ldlink.nci.nih.gov)
+Run `05_functional_validation/cadd_annotation.R`
+- CADD score annotation performed using the myvariant.info API (hg19)
+- Output: credible_set_CADD_scores_complete.csv
 
 ### Step 6 — SMR Analysis
+SMR analysis was additionally performed to investigate whether the SCZ GWAS signal and fetal brain methylation signal at each colocalised locus share a common underlying variant.
 Run SMR using:
 ```bash
 ./smr_x86 \
@@ -96,16 +123,16 @@ Run SMR using:
   --diff-freq-prop 0.6 \
   --thread-num 4
 ```
+Note: The Hannon et al. fetal brain mQTL BESD file uses chr:bp SNP identifiers rather than rsIDs. The GWAS summary statistics and LD reference panel were therefore converted from rsID to chr:bp format prior to SMR analysis to ensure consistent SNP matching across datasets. See 06_SMR_analysis/prepare_gwas_smr.R for the conversion script.
 
 ## References
-1. Trubetskoy V, et al. Nature. 2022;604:502-508.
-2. Hannon E, et al. Nature Neuroscience. 2016;19:1568-1579.
-3. Spargo TP, et al. eLife. 2023;12:e88768.
-4. Giambartolomei C, et al. PLOS Genetics. 2014;10:e1004383.
-5. Wallace C. PLOS Genetics. 2021;17:e1009440.
-6. Zhu Z, et al. Nature Genetics. 2016;48:481-487.
-7. Wang G, et al. J Royal Statistical Society B. 2020;82:1273-1300.
-8. 1000 Genomes Project Consortium. Nature. 2015;526:68-74.
-9. Polioudakis D, et al. Neuron. 2019;103:785-801.
-10. Machiela MJ, Chanock SJ. Bioinformatics. 2015;31:3555-3557.
-11. Rentzsch P, et al. Nucleic Acids Research. 2019;47:D886-D894.
+
+1. Trubetskoy V, et al. Nature. 2022;604:502-508. https://doi.org/10.1038/s41586-022-04434-5
+2. Hannon E, et al. Nature Neuroscience. 2016;19:48-54. https://doi.org/10.1038/nn.4182
+3. Spargo TP, et al. eLife. 2024;12:RP88768. https://doi.org/10.7554/eLife.88768
+4. Giambartolomei C, et al. PLoS Genetics. 2014;10:e1004383. https://doi.org/10.1371/journal.pgen.1004383
+5. Wallace C. PLoS Genetics. 2021;17:e1009440. https://doi.org/10.1371/journal.pgen.1009440
+6. Zhu Z, et al. Nature Genetics. 2016;48:481-487. https://doi.org/10.1038/ng.3538
+7. Wang G, et al. Journal of the Royal Statistical Society Series B. 2020;82:1273-1300. https://doi.org/10.1111/rssb.12388
+8. 1000 Genomes Project Consortium. Nature. 2015;526:68-74. https://doi.org/10.1038/nature15393
+9. Rentzsch P, et al. Nucleic Acids Research. 2019;47:D886-D894. https://doi.org/10.1093/nar/gky1016
