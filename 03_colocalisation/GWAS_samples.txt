@@ -1,0 +1,3 @@
+ID	type	prop	traitSD	p_col	stat_col	N_col	chr_col	pos_col	se_col	snp_col	A1_col	A2_col	freq_col	traitLabel	FILEPATH
+SCZ	cc	0.5	NA	P_gwas	BETA_gwas	NEFF	CHR	POS	SE_gwas	SNP	EA	OA	MAF	Schizophrenia	~/Desktop/Thesis/gwas_qc.csv
+mQTL	quant	NA	NA	P_mqtl	BETA_mqtl	N_mqtl	CHR	POS	SE_mqtl	SNP	EA_mqtl	A2_ref	MAF	Fetal_Brain_mQTL	~/Desktop/Thesis/mqtl_preprocessed.csv
