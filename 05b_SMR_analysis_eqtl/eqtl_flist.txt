@@ -1,6 +1,0 @@
-smr_eqtl/CYP2D6_chrbp.txt
-smr_eqtl/NAGA_chrbp.txt
-smr_eqtl/SMDT1_chrbp.txt
-smr_eqtl/WBP2NL_chrbp.txt
-smr_eqtl/HSPA9_chrbp.txt
-smr_eqtl/KRT18P46_chrbp.txt
