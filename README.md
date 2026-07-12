@@ -2,9 +2,9 @@
 
 ## Overview
 
-This repository contains the computational pipeline used to prioritise candidate genes for schizophrenia (SCZ) by integrating genome-wide association study (GWAS) summary statistics with fetal brain methylation quantitative trait loci (mQTL) and expression quantitative trait loci (eQTL) data.
+This repository contains the computational pipeline used to prioritise genes for schizophrenia (SCZ) by integrating genome-wide association study (GWAS) summary statistics with fetal brain methylation quantitative trait loci (mQTL) and expression quantitative trait loci (eQTL) data.
 
-The project uses SCZ–fetal brain colocalisation as the primary statistical analysis, followed by functional annotation and causal-support analysis (SMR/HEIDI). The workflow is designed to produce a conservative, evidence-based, genetically prioritised set of candidate genes for future functional investigation.
+The project uses SCZ–fetal brain colocalisation as the primary statistical analysis, followed by causal-support analysis (SMR/HEIDI). The workflow is designed to produce a conservative, evidence-based, genetically prioritised set of genes for future functional investigation.
 
 **Author:** Ruthushree P Basappa  
 **Institution:** University of Galway  
@@ -45,12 +45,12 @@ Locus-level colocalisation was tested across all 201 independent GWAS loci; four
 | SMDT1 | 0.955 | 1.02e-04 | 0.0647 |
 | WBP2NL | 0.887 | 4.76e-05 | 0.0176 |
 | HSPA9 | 0.881 | 4.39e-04 | 0.416 |
-| ENSG00000227370* | 0.850 | NA | NA |
-| KRT18P46* | 0.803 | 1.61e-03 | 0.375 |
-
-*Pseudogenes, retained for transparency.
+| ENSG00000227370 | 0.850 | NA | NA |
+| KRT18P46 | 0.803 | 1.61e-03 | 0.375 |
 
 HEIDI was used as a heterogeneity check in the SMR framework. p_HEIDI > 0.05 is consistent with a single shared causal variant (pleiotropy); p_HEIDI < 0.05 suggests linkage between distinct causal variants.
+
+Full colocalisation results for significant loci are not stored in this repository; they are available via the Data Availability statement in the associated manuscript.
 
 ## Repository structure
 
@@ -71,24 +71,19 @@ SCZ_mQTL_eQTL_Colocalisation_Pipeline/
 │   └── run_coloc_all.sh
 ├── 02b_colocalisation_eqtl/
 │   ├── GWAS_samples_eqtl.txt
-│   ├── set.regions.eqtl.txt
-│   └── 06_eqtl_coloc_analysis.R
+│   └── run_coloc_all_eqtl.sh
 ├── 03_results_analysis/
 │   └── analyse_coloc_results.R
 ├── 03b_results_analysis_eqtl/
-│   ├── coloc_eqtl_hits.csv
-│   ├── coloc_eqtl_pergene_results.csv
-│   ├── coloc_eqtl_pergene_significant.csv
-│   ├── coloc_eqtl_directionality.csv
-│   └── coloc_eqtl_credible_sets_full.csv
-├── 04_functional_validation/
-│   └── cadd_annotation.R
-├── 05_SMR_analysis/
+│   └── analyse_coloc_results_eqtl.R
+├── 04_SMR_analysis/
 │   ├── all_probes.txt
 │   ├── prepare_gwas_smr.R
 │   └── run_smr.sh
-├── 05b_SMR_analysis_eqtl/
-│   └── eqtl_flist.txt
+├── 04b_SMR_analysis_eqtl/
+│   ├── eqtl_flist.txt
+│   ├── build_eqtl_besd.sh
+│   └── run_smr_eqtl.sh
 └── README.md
 ```
 
@@ -139,9 +134,9 @@ These steps perform:
 - Export of cleaned GWAS and mQTL/eQTL summary-statistics files
 
 **Outputs:**
-- `gwas_qc.csv`
-- `mqtl_preprocessed.csv`
-- `eqtl_preprocessed.csv`
+- `data/gwas_qc.csv`
+- `data/mqtl_preprocessed.csv`
+- `data/eqtl_preprocessed.csv`
 
 ### 2. Locus definition
 
@@ -149,13 +144,12 @@ Performed within `01_data_preprocessing/preprocess_and_define_loci.R`.
 
 A distance-based greedy approach was used to define independent GWAS loci using 1 Mb windows centered on lead SNPs.
 
-**Output:**
-- `201` independent loci
+**Output:** `201` independent loci
 
 ### 3. Colocalisation
 
 **mQTL:** Run `02_colocalisation/run_coloc_all.sh`.
-**eQTL:** Run `02b_colocalisation_eqtl/06_eqtl_coloc_analysis.R`.
+**eQTL:** Run `02b_colocalisation_eqtl/run_coloc_all_eqtl.sh`.
 
 This step uses COLOC-reporter to test for shared causal variants at each locus.
 
@@ -163,60 +157,35 @@ This step uses COLOC-reporter to test for shared causal variants at each locus.
 - `coloc.abf` is used as a fallback when SuSiE does not converge
 - Loci with PP4 ≥ 0.8 are considered colocalised
 
-For eQTL, colocalisation was first tested at the locus level across all 201 loci. Loci passing PP4 ≥ 0.8 were then carried forward for per-gene colocalisation (following Dobbyn et al. 2018), run independently for each gene with available eQTL data within the locus window, to identify which specific gene(s) drove the colocalised signal.
+For eQTL, colocalisation was first tested at the locus level across all 201 loci. Loci passing PP4 ≥ 0.8 were then carried forward for per-gene colocalisation (following Dobbyn et al. 2018), run independently for each gene with available eQTL data within the locus window, to identify which specific gene(s) drove the colocalised signal. This per-gene step is performed in `03b_results_analysis_eqtl/analyse_coloc_results_eqtl.R`.
 
 ### 4. Results analysis
 
 **mQTL:** Run `03_results_analysis/analyse_coloc_results.R`.
-**eQTL:** Outputs in `03b_results_analysis_eqtl/`.
+**eQTL:** Run `03b_results_analysis_eqtl/analyse_coloc_results_eqtl.R`.
 
-This step includes:
+These steps include:
+- per-gene colocalisation (eQTL only)
 - candidate credible set construction
 - directionality analysis
-- variant annotation
 - locus-level and gene-level prioritisation
 
-### 5. Functional validation
-
-Run `04_functional_validation/cadd_annotation.R`.
-
-This step performs:
-- CADD score annotation
-- variant consequence annotation
-- retrieval of functional information using the myvariant.info API
-
-**Output:**
-- `credible_set_CADD_scores_complete.csv`
-
-### 6. SMR analysis
+### 5. SMR analysis
 
 SMR was used as an orthogonal analysis to evaluate whether the SCZ GWAS signal and fetal brain mQTL/eQTL signal at each colocalised locus are consistent with a shared underlying variant.
 
-**mQTL**, run:
+**mQTL:** Run `04_SMR_analysis/prepare_gwas_smr.R`, then `04_SMR_analysis/run_smr.sh`.
 
-```bash
-./smr_x86 \
-  --bfile g1000_eur_chrbp/g1000_eur \
-  --gwas-summary gwas_smr_chrbp.txt \
-  --beqtl-summary FB_Brain_2 \
-  --out smr_all_genes \
-  --extract-probe all_probes.txt \
-  --peqtl-smr 5e-8 \
-  --diff-freq 0.4 \
-  --diff-freq-prop 0.6 \
-  --thread-num 4
-```
+**eQTL:** No pre-built BESD file was available for the O'Brien eQTL dataset (unlike FB_Brain_2 for mQTL), so per-gene BESD files were constructed directly. Run `04b_SMR_analysis_eqtl/build_eqtl_besd.sh`, then `04b_SMR_analysis_eqtl/run_smr_eqtl.sh`. Custom BESD files are referenced via the `--eqtl-flist` flag (`04b_SMR_analysis_eqtl/eqtl_flist.txt`), using an instrument significance threshold of 1×10⁻⁴ to maximise instrument availability given the smaller eQTL sample size (n=120), and the `--disable-freq-ck` flag following manual verification that frequency discordances reflected allele coding convention differences rather than genuine mismatches. SMR/HEIDI results are treated as orthogonal supporting evidence rather than a primary inclusion criterion.
 
-**eQTL**, custom BESD files were constructed via the `--eqtl-flist` flag (see `05b_SMR_analysis_eqtl/eqtl_flist.txt`), using an instrument significance threshold of 1×10⁻⁴ to maximise instrument availability given the smaller eQTL sample size (n=120). SMR/HEIDI results are treated as orthogonal supporting evidence rather than a primary inclusion criterion.
-
-The Hannon fetal brain mQTL BESD file uses chr:bp SNP identifiers rather than rsIDs. GWAS summary statistics and the LD reference panel were converted from rsID to chr:bp format before SMR analysis to ensure consistent SNP matching.
+The Hannon fetal brain mQTL BESD file and the O'Brien eQTL data both use chr:bp SNP identifiers rather than rsIDs. GWAS summary statistics and the LD reference panel were converted from rsID to chr:bp format before SMR analysis to ensure consistent SNP matching.
 
 ## Notes
 
 - This repository is under active development
 - The current workflow prioritises specificity and reproducibility over maximal sensitivity
-- Conservative harmonisation choices may exclude some borderline variants, but retained loci represent high-confidence candidates
-- This repository is intended for computational, genetically-prioritised candidate gene identification and does not claim experimental validation or therapeutic target confirmation
+- Conservative harmonisation choices may exclude some borderline variants, but retained loci represent high-confidence genes
+- This repository is intended for computational, genetically-prioritised gene identification and does not claim experimental validation or therapeutic target confirmation
 
 ## References
 
@@ -229,4 +198,3 @@ The Hannon fetal brain mQTL BESD file uses chr:bp SNP identifiers rather than rs
 7. Zhu Z, et al. Nature Genetics. 2016;48:481-487. [doi](https://doi.org/10.1038/ng.3538)
 8. Dobbyn A, et al. American Journal of Human Genetics. 2018;102:1169-1184. [doi](https://doi.org/10.1016/j.ajhg.2018.04.011)
 9. 1000 Genomes Project Consortium. Nature. 2015;526:68-74. [doi](https://doi.org/10.1038/nature15393)
-10. Rentzsch P, et al. Nucleic Acids Research. 2019;47:D886-D894. [doi](https://doi.org/10.1093/nar/gky1016)
