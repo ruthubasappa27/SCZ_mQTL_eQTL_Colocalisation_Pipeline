@@ -122,7 +122,7 @@ All datasets used in this pipeline are publicly available.
 1. **PGC3 SCZ GWAS:** [PGC download page](https://pgc.unc.edu/for-researchers/download-results/)
 2. **Hannon fetal brain mQTL:** [Essex mQTL resource](https://epigenetics.essex.ac.uk/mQTL/) and [PubMed article](https://pubmed.ncbi.nlm.nih.gov/26619357/)
 3. **Hannon BESD-format mQTL:** [SMR data resources](https://yanglab.westlake.edu.cn/software/smr/#DataResource)
-4. O'Brien fetal brain eQTL summary statistics: figshare dataset , Genome Biology article 
+4. **O'Brien fetal brain eQTL summary statistics:** [figshare dataset](https://doi.org/10.6084/m9.figshare.6881825), [Genome Biology article](https://doi.org/10.1186/s13059-018-1567-1)
 5. **1000 Genomes Phase 3 EUR LD reference panel:** [PLINK format](https://vu.data.surfsara.nl/index.php/s/VZNByNwpD8qqINe), [SMR format](https://yanglab.westlake.edu.cn/software/smr/)
 6. **COLOC-reporter pipeline:** [GitHub repository](https://github.com/ThomasPSpargo/COLOC-reporter)
 
