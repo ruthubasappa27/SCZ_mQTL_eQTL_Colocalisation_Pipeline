@@ -1,0 +1,3 @@
+ID	type	prop	traitSD	p_col	stat_col	N_col	chr_col	pos_col	se_col	snp_col	A1_col	A2_col	freq_col	traitLabel	FILEPATH
+SCZ	cc	0.5	NA	P_gwas	BETA_gwas	NEFF	CHR	POS	SE_gwas	SNP	EA	OA	MAF	Schizophrenia	data/gwas_qc.csv
+eQTL	quant	NA	NA	pval_nominal	slope	N_eqtl	CHR	POS	slope_se	variant_id	A1_ref	A2_ref	maf	Brain_eQTL	data/eqtl_preprocessed.csv
