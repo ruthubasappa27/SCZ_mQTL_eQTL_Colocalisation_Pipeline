@@ -1,10 +1,10 @@
-# SCZ mQTL Drug Target Prioritisation Pipeline
+# SCZ mQTL eQTL Colocalisation Pipeline
 
 ## Overview
 
-This repository contains the computational pipeline used to prioritise candidate therapeutic targets for schizophrenia (SCZ) by integrating genome-wide association study (GWAS) summary statistics with fetal brain methylation quantitative trait loci (mQTL) data.
+This repository contains the computational pipeline used to prioritise candidate genes for schizophrenia (SCZ) by integrating genome-wide association study (GWAS) summary statistics with fetal brain methylation quantitative trait loci (mQTL) and expression quantitative trait loci (eQTL) data.
 
-The project uses SCZ-fetal brain mQTL colocalisation as the primary statistical analysis, followed by functional annotation, causal-support analysis, and drug-target prioritisation. The workflow is designed to produce a conservative, evidence-based shortlist of candidate genes for downstream translational follow-up.
+The project uses SCZ–fetal brain colocalisation as the primary statistical analysis, followed by functional annotation and causal-support analysis (SMR/HEIDI). The workflow is designed to produce a conservative, evidence-based, genetically prioritised set of candidate genes for future functional investigation.
 
 **Author:** Ruthushree P Basappa  
 **Institution:** University of Galway  
@@ -13,12 +13,15 @@ The project uses SCZ-fetal brain mQTL colocalisation as the primary statistical 
 
 ## Study design
 
-- **GWAS:** PGC3 schizophrenia GWAS (Trubetskoy et al. 2022), n=127,906
+- **GWAS:** PGC3 schizophrenia GWAS (Trubetskoy et al. 2022), 53,386 cases; 77,258 controls
 - **mQTL:** Hannon et al. fetal brain mQTL (2016), n=166
+- **eQTL:** O'Brien et al. fetal brain eQTL (2018), n=120
 - **Genome build:** GRCh37 / hg19
 - **Primary colocalisation framework:** COLOC-reporter (Spargo et al. 2024)
 
 ## Key results
+
+### mQTL colocalisation
 
 Six loci showed strong evidence of colocalisation between SCZ GWAS and fetal brain mQTL signals using a PP4 threshold of 0.8.
 
@@ -31,13 +34,28 @@ Six loci showed strong evidence of colocalisation between SCZ GWAS and fetal bra
 | WDR55 | 0.881 | 3.51e-05 | 0.604 |
 | DYNC1I2 | 0.816 | 1.42e-04 | 0.825 |
 
-HEIDI was used as a heterogeneity check in the SMR framework, and non-significant HEIDI values were treated as supportive of a shared underlying signal rather than definitive proof of causality.
+### eQTL colocalisation
 
+Locus-level colocalisation was tested across all 201 independent GWAS loci; four loci passed the PP4 ≥ 0.8 threshold. Per-gene colocalisation was then performed at these four loci (following Dobbyn et al. 2018), identifying seven gene-level signals across three loci.
+
+| Gene | PP4 | p_SMR | p_HEIDI |
+|------|-----:|------:|--------:|
+| CYP2D6 | 0.987 | 7.36e-05 | 2.03e-04 |
+| NAGA | 0.965 | 2.79e-04 | 0.888 |
+| SMDT1 | 0.955 | 1.02e-04 | 0.0647 |
+| WBP2NL | 0.887 | 4.76e-05 | 0.0176 |
+| HSPA9 | 0.881 | 4.39e-04 | 0.416 |
+| ENSG00000227370* | 0.850 | NA | NA |
+| KRT18P46* | 0.803 | 1.61e-03 | 0.375 |
+
+*Pseudogenes, retained for transparency.
+
+HEIDI was used as a heterogeneity check in the SMR framework. p_HEIDI > 0.05 is consistent with a single shared causal variant (pleiotropy); p_HEIDI < 0.05 suggests linkage between distinct causal variants.
 
 ## Repository structure
 
 ```text
-SCZ_mQTL_DrugTarget_Pipeline/
+SCZ_mQTL_eQTL_Colocalisation_Pipeline/
 ├── data/
 │   └── README.md
 ├── references/
@@ -46,17 +64,31 @@ SCZ_mQTL_DrugTarget_Pipeline/
 │   └── README.md
 ├── 01_data_preprocessing/
 │   └── preprocess_and_define_loci.R
+├── 01b_data_preprocessing_eqtl/
+│   └── eqtl_R_analysis.R
 ├── 02_colocalisation/
 │   ├── GWAS_samples.txt
 │   └── run_coloc_all.sh
+├── 02b_colocalisation_eqtl/
+│   ├── GWAS_samples_eqtl.txt
+│   ├── set.regions.eqtl.txt
+│   └── 06_eqtl_coloc_analysis.R
 ├── 03_results_analysis/
 │   └── analyse_coloc_results.R
+├── 03b_results_analysis_eqtl/
+│   ├── coloc_eqtl_hits.csv
+│   ├── coloc_eqtl_pergene_results.csv
+│   ├── coloc_eqtl_pergene_significant.csv
+│   ├── coloc_eqtl_directionality.csv
+│   └── coloc_eqtl_credible_sets_full.csv
 ├── 04_functional_validation/
 │   └── cadd_annotation.R
 ├── 05_SMR_analysis/
 │   ├── all_probes.txt
 │   ├── prepare_gwas_smr.R
 │   └── run_smr.sh
+├── 05b_SMR_analysis_eqtl/
+│   └── eqtl_flist.txt
 └── README.md
 ```
 
@@ -76,6 +108,7 @@ SCZ_mQTL_DrugTarget_Pipeline/
 - susieR
 - httr
 - jsonlite
+- here
 
 ### Operating system
 
@@ -89,27 +122,30 @@ All datasets used in this pipeline are publicly available.
 1. **PGC3 SCZ GWAS:** [PGC download page](https://pgc.unc.edu/for-researchers/download-results/)
 2. **Hannon fetal brain mQTL:** [Essex mQTL resource](https://epigenetics.essex.ac.uk/mQTL/) and [PubMed article](https://pubmed.ncbi.nlm.nih.gov/26619357/)
 3. **Hannon BESD-format mQTL:** [SMR data resources](https://yanglab.westlake.edu.cn/software/smr/#DataResource)
-4. **1000 Genomes Phase 3 EUR LD reference panel:** [PLINK format](https://vu.data.surfsara.nl/index.php/s/VZNByNwpD8qqINe), [SMR format](https://yanglab.westlake.edu.cn/software/smr/)
-5. **COLOC-reporter pipeline:** [GitHub repository](https://github.com/ThomasPSpargo/COLOC-reporter)
+4. **O'Brien fetal brain eQTL:** [PubMed article](https://pubmed.ncbi.nlm.nih.gov/30453988/)
+5. **1000 Genomes Phase 3 EUR LD reference panel:** [PLINK format](https://vu.data.surfsara.nl/index.php/s/VZNByNwpD8qqINe), [SMR format](https://yanglab.westlake.edu.cn/software/smr/)
+6. **COLOC-reporter pipeline:** [GitHub repository](https://github.com/ThomasPSpargo/COLOC-reporter)
 
 ## Workflow
 
 ### 1. Data preprocessing
 
-Run `01_data_preprocessing/preprocess_and_define_loci.R`.
+**mQTL:** Run `01_data_preprocessing/preprocess_and_define_loci.R`.
+**eQTL:** Run `01b_data_preprocessing_eqtl/eqtl_R_analysis.R`.
 
-This step performs:
+These steps perform:
 - GWAS QC, including filtering by imputation quality, MAF, and palindromic SNP removal
-- mQTL preprocessing, including column standardisation, standard error calculation, and rsID assignment
-- Export of cleaned GWAS and mQTL summary-statistics files
+- mQTL/eQTL preprocessing, including column standardisation, standard error calculation, and allele harmonisation
+- Export of cleaned GWAS and mQTL/eQTL summary-statistics files
 
 **Outputs:**
 - `gwas_qc.csv`
 - `mqtl_preprocessed.csv`
+- `eqtl_preprocessed.csv`
 
 ### 2. Locus definition
 
-This step is performed within `01_data_preprocessing/preprocess_and_define_loci.R`.
+Performed within `01_data_preprocessing/preprocess_and_define_loci.R`.
 
 A distance-based greedy approach was used to define independent GWAS loci using 1 Mb windows centered on lead SNPs.
 
@@ -118,23 +154,27 @@ A distance-based greedy approach was used to define independent GWAS loci using 
 
 ### 3. Colocalisation
 
-Run `02_colocalisation/run_coloc_all.sh`.
+**mQTL:** Run `02_colocalisation/run_coloc_all.sh`.
+**eQTL:** Run `02b_colocalisation_eqtl/06_eqtl_coloc_analysis.R`.
 
 This step uses COLOC-reporter to test for shared causal variants at each locus.
 
 - `coloc.susie` is used when SuSiE fine-mapping converges
 - `coloc.abf` is used as a fallback when SuSiE does not converge
-- Loci with PP4 >= 0.8 are considered colocalised
+- Loci with PP4 ≥ 0.8 are considered colocalised
+
+For eQTL, colocalisation was first tested at the locus level across all 201 loci. Loci passing PP4 ≥ 0.8 were then carried forward for per-gene colocalisation (following Dobbyn et al. 2018), run independently for each gene with available eQTL data within the locus window, to identify which specific gene(s) drove the colocalised signal.
 
 ### 4. Results analysis
 
-Run `03_results_analysis/analyse_coloc_results.R`.
+**mQTL:** Run `03_results_analysis/analyse_coloc_results.R`.
+**eQTL:** Outputs in `03b_results_analysis_eqtl/`.
 
 This step includes:
 - candidate credible set construction
 - directionality analysis
 - variant annotation
-- locus-level prioritisation
+- locus-level and gene-level prioritisation
 
 ### 5. Functional validation
 
@@ -150,9 +190,9 @@ This step performs:
 
 ### 6. SMR analysis
 
-SMR was used as an orthogonal analysis to evaluate whether the SCZ GWAS signal and fetal brain mQTL signal at each colocalised locus are consistent with a shared underlying variant.
+SMR was used as an orthogonal analysis to evaluate whether the SCZ GWAS signal and fetal brain mQTL/eQTL signal at each colocalised locus are consistent with a shared underlying variant.
 
-Run:
+**mQTL**, run:
 
 ```bash
 ./smr_x86 \
@@ -167,6 +207,8 @@ Run:
   --thread-num 4
 ```
 
+**eQTL**, custom BESD files were constructed via the `--eqtl-flist` flag (see `05b_SMR_analysis_eqtl/eqtl_flist.txt`), using an instrument significance threshold of 1×10⁻⁴ to maximise instrument availability given the smaller eQTL sample size (n=120). SMR/HEIDI results are treated as orthogonal supporting evidence rather than a primary inclusion criterion.
+
 The Hannon fetal brain mQTL BESD file uses chr:bp SNP identifiers rather than rsIDs. GWAS summary statistics and the LD reference panel were converted from rsID to chr:bp format before SMR analysis to ensure consistent SNP matching.
 
 ## Notes
@@ -174,16 +216,17 @@ The Hannon fetal brain mQTL BESD file uses chr:bp SNP identifiers rather than rs
 - This repository is under active development
 - The current workflow prioritises specificity and reproducibility over maximal sensitivity
 - Conservative harmonisation choices may exclude some borderline variants, but retained loci represent high-confidence candidates
-- This repository is intended for computational prioritisation and does not claim experimental validation of drug targets
+- This repository is intended for computational, genetically-prioritised candidate gene identification and does not claim experimental validation or therapeutic target confirmation
 
 ## References
 
 1. Trubetskoy V, et al. Nature. 2022;604:502-508. [doi](https://doi.org/10.1038/s41586-022-04434-5)
 2. Hannon E, et al. Nature Neuroscience. 2016;19:48-54. [doi](https://doi.org/10.1038/nn.4182)
-3. Spargo TP, et al. eLife. 2024;12:RP88768. [doi](https://doi.org/10.7554/eLife.88768)
-4. Giambartolomei C, et al. PLoS Genetics. 2014;10:e1004383. [doi](https://doi.org/10.1371/journal.pgen.1004383)
-5. Wallace C. PLoS Genetics. 2021;17:e1009440. [doi](https://doi.org/10.1371/journal.pgen.1009440)
-6. Zhu Z, et al. Nature Genetics. 2016;48:481-487. [doi](https://doi.org/10.1038/ng.3538)
-7. Wang G, et al. J R Stat Soc Series B. 2020;82:1273-1300. [doi](https://doi.org/10.1111/rssb.12388)
-8. 1000 Genomes Project Consortium. Nature. 2015;526:68-74. [doi](https://doi.org/10.1038/nature15393)
-9. Rentzsch P, et al. Nucleic Acids Research. 2019;47:D886-D894. [doi](https://doi.org/10.1093/nar/gky1016)
+3. O'Brien HE, et al. Genome Biology. 2018;19:194. [doi](https://doi.org/10.1186/s13059-018-1567-1)
+4. Spargo TP, et al. eLife. 2024;12:RP88768. [doi](https://doi.org/10.7554/eLife.88768)
+5. Giambartolomei C, et al. PLoS Genetics. 2014;10:e1004383. [doi](https://doi.org/10.1371/journal.pgen.1004383)
+6. Wallace C. PLoS Genetics. 2021;17:e1009440. [doi](https://doi.org/10.1371/journal.pgen.1009440)
+7. Zhu Z, et al. Nature Genetics. 2016;48:481-487. [doi](https://doi.org/10.1038/ng.3538)
+8. Dobbyn A, et al. American Journal of Human Genetics. 2018;102:1169-1184. [doi](https://doi.org/10.1016/j.ajhg.2018.04.011)
+9. 1000 Genomes Project Consortium. Nature. 2015;526:68-74. [doi](https://doi.org/10.1038/nature15393)
+10. Rentzsch P, et al. Nucleic Acids Research. 2019;47:D886-D894. [doi](https://doi.org/10.1093/nar/gky1016)
