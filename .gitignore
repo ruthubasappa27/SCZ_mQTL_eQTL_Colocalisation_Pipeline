@@ -1,0 +1,14 @@
+data/
+references/
+tools/
+results/
+results_backup/
+logs/
+tmp/
+.Rhistory
+.RData
+.Rproj.user/
+.DS_Store
+logs_backup/
+rerun_log.txt
+Rplots.pdf
